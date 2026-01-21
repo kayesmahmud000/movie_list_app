@@ -16,8 +16,8 @@ class SettingsPage extends StatelessWidget {
         title: Text("Settings",  style: TextStyle(fontSize: 30, fontWeight: .w700 ,color: Colors.white)),),
         body:Consumer<ThemeProvider>(builder:(context, provider, child) =>  Container(
           child: SwitchListTile.adaptive(
-            title: Text("Theme Mode"),
-            subtitle: Text('Change the theme mode hare '),
+            title: Text("Theme Mode" ,style: TextStyle(fontSize: 23, fontWeight: .w500),),
+            subtitle: Text('Change the theme mode hare ',style: TextStyle(fontSize: 19, fontWeight: .w400),),
             value: provider.getThemeMode(), onChanged:(value) => provider.updateTheme(mode:value),),
         ),)
     );

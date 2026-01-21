@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:movie_list_app/db/db_helper.dart';
 import 'package:movie_list_app/handle_movie_field.dart';
+import 'package:movie_list_app/model/wishlist_model.dart';
 import 'package:movie_list_app/provider/movie_provider.dart';
+import 'package:movie_list_app/provider/wishlist_provider.dart';
 import 'package:movie_list_app/settings_page.dart';
 import 'package:movie_list_app/wish_list.dart';
 import 'package:provider/provider.dart';
@@ -21,10 +23,29 @@ class _MyMoviePageState extends State<MyMoviePage> {
   void initState() {
     super.initState();
     context.read<MovieProvider>().getInitialMovie();
+    context.read<WishlistProvider>().getInitialWishlist();
   }
+
+
+void handleWishlist(String title) {
+  final wishlistProvider = context.read<WishlistProvider>();
+
+  bool isWishlisted = wishlistProvider.isMovieWishlisted(title);
+
+  if (isWishlisted) {
+    // remove
+    wishlistProvider.deleteByMovieTitle(title);
+  } else {
+    // add
+    WishlistModel wish = WishlistModel(movieTile: title);
+    wishlistProvider.addWishList(wish);
+  }
+}
 
 @override
   Widget build(BuildContext context) {
+
+           List<Map<String, dynamic>> wishlists =context.watch<WishlistProvider>().getWishlist();
      return Scaffold(
       appBar: AppBar(
       
@@ -40,7 +61,12 @@ class _MyMoviePageState extends State<MyMoviePage> {
                 children: [
                      InkWell(
                      onTap: () => Navigator.push(context, MaterialPageRoute(builder:(context) => WishList(),)),
-                    child: Icon(Icons.favorite , color: Colors.white,)),
+                    child: Row(
+                      children: [
+                        Text('${wishlists.length}', style: TextStyle(fontSize: 20, color: Colors.white),),
+                        Icon(Icons.favorite , color: Colors.white,),
+                      ],
+                    )),
                     InkWell(
                      onTap: () => Navigator.push(context, MaterialPageRoute(builder:(context) => SettingsPage(),)),child:  Icon(Icons.more_vert, color: Colors.white,))
                 ],
@@ -51,14 +77,22 @@ class _MyMoviePageState extends State<MyMoviePage> {
           ],
         
       ),
-      body: Consumer<MovieProvider>(builder:(context, value, child){
+      body: Consumer<MovieProvider>(builder:(ctx, value, child){
        List<Map<String, dynamic>> allMovies =value.getMovies();
+
+
+       
        return allMovies.isNotEmpty? Padding(
          padding: const EdgeInsets.all(8.0),
          child: ListView.builder(
           itemCount: allMovies.length,
           itemBuilder:(
-          context, index) => Padding(
+          context, index) {
+            bool isWishlisted = wishlists.any(
+  (w) => w[DbHelper.MOVIE_NAME_COL] ==
+      allMovies[index][DbHelper.MOVIE_COLUMN_TITLE],
+);
+            return Padding(
             padding: const EdgeInsets.all(8.0),
             child: ListTile(
               shape: BeveledRectangleBorder(borderRadius: .circular(2)),
@@ -70,20 +104,22 @@ class _MyMoviePageState extends State<MyMoviePage> {
                 spacing: 10,
                 mainAxisSize: .min,
                 children: [
-                  Icon(Icons.favorite , color: Colors.white,),
+                  IconButton(
+                    onPressed: () => handleWishlist(allMovies[index][DbHelper.MOVIE_COLUMN_TITLE]),
+                    icon: Icon(Icons.favorite , color:isWishlisted ? Colors.red: Colors.white,)),
                   InkWell(
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder:(context) => HandleMovieField(isUpdate: true, defaultTitle:allMovies[index][DbHelper.MOVIE_COLUMN_TITLE] , defaultDuration: allMovies[index][DbHelper.MOVIE_COLUMN_DURATION], sl: allMovies[index][DbHelper.MOVIE_COLUMN_SL_NO]),)),
                     child: Icon(Icons.edit)),
                   IconButton(
                     onPressed: () => {
-                      context.read<MovieProvider>().deleteMovie(allMovies[index][DbHelper.MOVIE_COLUMN_SL_NO])
+                      ctx.read<MovieProvider>().deleteMovie(allMovies[index][DbHelper.MOVIE_COLUMN_SL_NO])
                     },
                     icon: Icon(Icons.delete, color:Colors.red ,)),
                 ],
               ),
                      
                      ),
-          ),),
+          );}),
        ):Center(child: Column(
         mainAxisAlignment: .center,
          children: [

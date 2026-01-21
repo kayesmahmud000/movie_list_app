@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:movie_list_app/db/db_helper.dart';
 import 'package:movie_list_app/provider/movie_provider.dart';
 import 'package:movie_list_app/provider/theme_provider.dart';
+import 'package:movie_list_app/provider/wishlist_provider.dart';
 import 'package:movie_list_app/splash_screen.dart';
 import 'package:provider/provider.dart';
 
 void main() {
   runApp(MultiProvider(providers: [ChangeNotifierProvider(create: (context)=>MovieProvider(dbHelper: DbHelper.getInstance)),
-  ChangeNotifierProvider(create:(context) => ThemeProvider(),)
+  ChangeNotifierProvider(create:(context) => ThemeProvider(),),
+  ChangeNotifierProvider(create:(context) => WishlistProvider(dbHelper: DbHelper.getInstance),)
   ],
   child: MyApp()) , );
 }
