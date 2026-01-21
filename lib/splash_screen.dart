@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:movie_list_app/main.dart';
 import 'package:movie_list_app/my_movie_page.dart';
 
 class SplashScreen extends StatefulWidget {
