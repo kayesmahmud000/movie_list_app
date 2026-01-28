@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:movie_list_app/db/db_helper.dart';
 import 'package:movie_list_app/handle_movie_field.dart';
+import 'package:movie_list_app/model/movie_model.dart';
 import 'package:movie_list_app/model/wishlist_model.dart';
 import 'package:movie_list_app/provider/movie_provider.dart';
 import 'package:movie_list_app/provider/wishlist_provider.dart';
@@ -30,103 +30,120 @@ class _MyMoviePageState extends State<MyMoviePage> {
 void handleWishlist(String title) {
   final wishlistProvider = context.read<WishlistProvider>();
 
-  bool isWishlisted = wishlistProvider.isMovieWishlisted(title);
+ bool isWishlisted = wishlistProvider.wishList.any((w) => w.movieTile == title);
 
-  if (isWishlisted) {
-    // remove
-    wishlistProvider.deleteByMovieTitle(title);
-  } else {
-    // add
-    WishlistModel wish = WishlistModel(movieTile: title);
-    wishlistProvider.addWishList(wish);
-  }
+    if (isWishlisted) {
+      // Find the item and delete by ID (assuming your model has slNo)
+      final item = wishlistProvider.wishList.firstWhere((w) => w.movieTile == title);
+      if (item.slNo != null) {
+        wishlistProvider.removeFromWishlist(item.slNo!);
+      }
+    } else {
+      wishlistProvider.addToWishlist(WishlistModel(movieTile: title));
+    }
 }
 
 @override
   Widget build(BuildContext context) {
 
-           List<Map<String, dynamic>> wishlists =context.watch<WishlistProvider>().getWishlist();
+          final wishlistItems = context.watch<WishlistProvider>().wishList;
+          
      return Scaffold(
       appBar: AppBar(
       
         backgroundColor: Theme.of(context).colorScheme.error,
        
         title: Text(widget.title, style: TextStyle(fontSize: 30, fontWeight: .w700 ,color: Colors.white),),
-        actions:  [
+        actions: [
           Padding(
             padding: const EdgeInsets.only(right: 20),
-            child: Container(
-              child: Row(
-                spacing: 10,
-                children: [
-                     InkWell(
-                     onTap: () => Navigator.push(context, MaterialPageRoute(builder:(context) => WishList(),)),
-                    child: Row(
-                      children: [
-                        Text('${wishlists.length}', style: TextStyle(fontSize: 20, color: Colors.white),),
-                        Icon(Icons.favorite , color: Colors.white,),
-                      ],
-                    )),
-                    InkWell(
-                     onTap: () => Navigator.push(context, MaterialPageRoute(builder:(context) => SettingsPage(),)),child:  Icon(Icons.more_vert, color: Colors.white,))
-                ],
-              ),
+            child: Row(
+              children: [
+                InkWell(
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const WishList())),
+                  child: Row(
+                    children: [
+                      Text('${wishlistItems.length}', style: const TextStyle(fontSize: 20, color: Colors.white)),
+                      const SizedBox(width: 5),
+                      const Icon(Icons.favorite, color: Colors.white),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 15),
+                InkWell(
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage())),
+                  child: const Icon(Icons.more_vert, color: Colors.white),
+                )
+              ],
             ),
           )
-           
-          ],
-        
+        ],
       ),
-      body: Consumer<MovieProvider>(builder:(ctx, value, child){
-       List<Map<String, dynamic>> allMovies =value.getMovies();
+    body: Consumer<MovieProvider>(builder: (ctx, provider, child) {
+        // Now using MovieModel objects!
+        List<MovieModel> allMovies = provider.movies;
 
+        if (allMovies.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('No Movie yet', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w600)),
+                Text('Please click the plus button to add one', textAlign: TextAlign.center),
+              ],
+            ),
+          );
+        }
 
-       
-       return allMovies.isNotEmpty? Padding(
-         padding: const EdgeInsets.all(8.0),
-         child: ListView.builder(
+        return ListView.builder(
           itemCount: allMovies.length,
-          itemBuilder:(
-          context, index) {
-            bool isWishlisted = wishlists.any(
-  (w) => w[DbHelper.MOVIE_NAME_COL] ==
-      allMovies[index][DbHelper.MOVIE_COLUMN_TITLE],
-);
+          itemBuilder: (context, index) {
+            final movie = allMovies[index];
+            bool isWishlisted = wishlistItems.any((w) => w.movieTile == movie.movieTitle);
+
             return Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ListTile(
-              shape: BeveledRectangleBorder(borderRadius: .circular(2)),
-              tileColor: Colors.red.shade100,
-              leading: Text('${index+1}',style: TextStyle(fontSize: 24, fontWeight: .w700)),
-              title: Text('${allMovies[index][DbHelper.MOVIE_COLUMN_TITLE]}', style: TextStyle(fontSize: 26, fontWeight: .w700),),
-              subtitle: Text('Duration : ${allMovies[index][DbHelper.MOVIE_COLUMN_DURATION]}', style: TextStyle(fontSize: 19, fontWeight: .w400)),
-              trailing: Row(
-                spacing: 10,
-                mainAxisSize: .min,
-                children: [
-                  IconButton(
-                    onPressed: () => handleWishlist(allMovies[index][DbHelper.MOVIE_COLUMN_TITLE]),
-                    icon: Icon(Icons.favorite , color:isWishlisted ? Colors.red: Colors.white,)),
-                  InkWell(
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder:(context) => HandleMovieField(isUpdate: true, defaultTitle:allMovies[index][DbHelper.MOVIE_COLUMN_TITLE] , defaultDuration: allMovies[index][DbHelper.MOVIE_COLUMN_DURATION], sl: allMovies[index][DbHelper.MOVIE_COLUMN_SL_NO]),)),
-                    child: Icon(Icons.edit)),
-                  IconButton(
-                    onPressed: () => {
-                      ctx.read<MovieProvider>().deleteMovie(allMovies[index][DbHelper.MOVIE_COLUMN_SL_NO])
-                    },
-                    icon: Icon(Icons.delete, color:Colors.red ,)),
-                ],
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: ListTile(
+                shape: BeveledRectangleBorder(borderRadius: BorderRadius.circular(2)),
+                tileColor: Colors.red.shade100,
+                leading: Text('${index + 1}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                title: Text(movie.movieTitle, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
+                subtitle: Text('Duration: ${movie.duration ?? "N/A"}'),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      onPressed: () => handleWishlist(movie.movieTitle),
+                      icon: Icon(Icons.favorite, color: isWishlisted ? Colors.red : Colors.grey),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => HandleMovieField(
+                            isUpdate: true,
+                            defaultTitle: movie.movieTitle,
+                            defaultDuration: movie.duration!,
+                            sl: movie.slNo!
+                          ),
+                        ),
+                      ),
+                      icon: const Icon(Icons.edit),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        if (movie.slNo != null) {
+                          // provider.deleteMovie(movie.slNo!);
+                        }
+                      },
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                    ),
+                  ],
+                ),
               ),
-                     
-                     ),
-          );}),
-       ):Center(child: Column(
-        mainAxisAlignment: .center,
-         children: [
-           Text('No Movie yat', style: TextStyle(fontSize:26 ,fontWeight: .w600),),
-           Text('Please click the plus button and add your first movie', style: TextStyle(fontSize:20 ,fontWeight: .w400),),
-         ],
-       ));
+            );
+          },
+        );
       }),
      floatingActionButton: FloatingActionButton(onPressed: ()=>Navigator.push(context, MaterialPageRoute(builder: (context)=>HandleMovieField())), child: Icon(Icons.add),),
     );

@@ -31,32 +31,32 @@ class _HandleMovieFieldState extends State<HandleMovieField> {
 
 final GlobalKey<FormState> _formKey =GlobalKey<FormState>();
 
-void handleMovie(){
+// void handleMovie(){
 
-  if(!_formKey.currentState!.validate()){
-    return;
-  }
+//   if(!_formKey.currentState!.validate()){
+//     return;
+//   }
 
-String title = titleController.text;
-String duration = durationController.text;
+// String title = titleController.text;
+// String duration = durationController.text;
 
-if( title.isEmpty && duration.isEmpty) return;
+// if( title.isEmpty && duration.isEmpty) return;
 
-MovieModel movieModel =MovieModel(
-  movieTitle: title, 
-  duration: duration
-  );
+// MovieModel movieModel =MovieModel(
+//   movieTitle: title, 
+//   duration: duration
+//   );
 
-if(widget.isUpdate){
-  context.read<MovieProvider>().updateMovie(movieModel, widget.sl);
-}else{
- context.read<MovieProvider>().addMovie(movieModel);
-}
-  titleController.clear();
-  durationController.clear();
+// if(widget.isUpdate){
+//   context.read<MovieProvider>().updateMovie(movieModel, widget.sl);
+// }else{
+//  context.read<MovieProvider>().addMovie(movieModel);
+// }
+//   titleController.clear();
+//   durationController.clear();
 
-  Navigator.pop(context);
-}
+//   Navigator.pop(context);
+// }
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +97,11 @@ if(widget.isUpdate){
               Row(
                 mainAxisAlignment: .spaceAround,
                 children: [
-                  CustomBtn(btnText: widget.isUpdate?"Update Movie":"Add Movie", callback: ()=>handleMovie(), bgColor: Colors.green, textStyle: TextStyle(color: Colors.white , fontSize: 18, fontWeight: .w600) ,),
+                  CustomBtn(btnText: widget.isUpdate?"Update Movie":"Add Movie", callback: (){
+                    
+                    // handleMovie()
+
+                  }, bgColor: Colors.green, textStyle: TextStyle(color: Colors.white , fontSize: 18, fontWeight: .w600) ,),
                   
                   CustomBtn(btnText: "Cancel", callback:()=>{
                     Navigator.pop(context)
